@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import "./index.css"
+import "style.css"
 
 // ================= DEFAULT PRESET DATA =================
 
