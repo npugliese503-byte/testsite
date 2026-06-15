@@ -1,0 +1,431 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Scribble - Dynamic Message Workspace</title>
+  </head>
+  <body class="bg-slate-50 text-slate-900 transition-colors duration-200 antialiased font-sans">
+    <div id="app" class="flex flex-col h-screen overflow-hidden">
+      <!-- Mobile Top Bar -->
+      <header class="md:hidden flex items-center justify-between px-4 py-3 bg-white border-b border-slate-200 dark:bg-slate-900 dark:border-slate-800 shrink-0 z-10">
+        <div class="flex items-center gap-3">
+          <button id="mobile-menu-toggle" class="p-2 -ml-2 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg cursor-pointer">
+            <!-- Menu SVG -->
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+          </button>
+          <span class="font-display font-medium text-slate-800 dark:text-slate-200 text-base" id="mobile-board-title">Workspace</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <button id="mobile-settings-btn" class="p-2 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg cursor-pointer">
+            <!-- Settings SVG -->
+            <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          </button>
+        </div>
+      </header>
+
+      <div class="flex flex-1 overflow-hidden relative">
+        <!-- Sidebar Navigation Drawer -->
+        <aside id="sidebar" class="fixed inset-y-0 left-0 z-30 w-72 bg-white border-r border-slate-200 dark:bg-slate-900 dark:border-slate-800 flex flex-col transform -translate-x-full md:translate-x-0 md:static transition-transform duration-300 ease-in-out shrink-0">
+          <!-- Sidebar Header -->
+          <div class="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between shrink-0 bg-slate-50/50 dark:bg-slate-900/50">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold text-lg shadow-sm">S</div>
+              <span class="font-display font-semibold text-slate-800 dark:text-slate-100 text-base">Scribble Hub</span>
+            </div>
+            <button id="sidebar-close" class="md:hidden p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg cursor-pointer">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+          </div>
+
+          <!-- Boards Scroll Area -->
+          <div class="flex-1 overflow-y-auto p-4 space-y-5">
+            <div>
+              <div class="flex items-center justify-between px-2 mb-3">
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Active Boards</span>
+                <button id="create-board-trigger" class="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 text-indigo-600 dark:text-indigo-400 rounded-lg cursor-pointer" title="Create Board">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                </button>
+              </div>
+              <nav id="boards-list-container" class="space-y-1">
+                <!-- Injected via JS -->
+              </nav>
+            </div>
+          </div>
+
+          <!-- Sidebar Footer Profile Dropdown -->
+          <div class="p-4 border-t border-slate-200 dark:border-slate-800 shrink-0 bg-slate-55 dark:bg-slate-900">
+            <div id="profile-selector-dropdown-wrapper">
+              <!-- Switcher UI parsed cleanly via JS inside single wrapper -->
+            </div>
+          </div>
+        </aside>
+
+        <!-- Sidebar Mobile overlay Backdrop shade -->
+        <div id="sidebar-overlay" class="fixed inset-0 z-20 bg-slate-900/40 backdrop-blur-xs hidden md:hidden"></div>
+
+        <!-- Main Workspace Flow Arena -->
+        <main id="board-arena" class="flex-1 flex flex-col overflow-hidden bg-[var(--board-background)] transition-colors duration-200" style="--board-background: #f8fafc;">
+          <!-- Board Segment Header -->
+          <header class="h-16 border-b border-slate-200 flex items-center justify-between px-6 shrink-0 bg-white dark:bg-slate-900 dark:border-slate-800 z-1" id="board-header">
+            <div class="flex-1 min-w-0 pr-4">
+              <div class="flex items-center gap-3">
+                <div id="board-header-icon" class="text-slate-500 fill-current shrink-0">
+                  <!-- SVG injected via JS -->
+                </div>
+                <h2 id="board-header-title" class="font-display font-semibold text-slate-800 dark:text-slate-100 text-lg truncate hover:text-indigo-600 transition-colors cursor-pointer" title="Edit board name">General Discussion</h2>
+                <button id="edit-board-btn" class="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-md cursor-pointer">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                </button>
+
+                <!-- Board Inline Edit Inputs -->
+                <div id="board-inline-edit-form" class="hidden flex items-center gap-2">
+                  <input type="text" id="board-edit-name-input" class="text-sm px-2 py-1 border border-indigo-500 rounded-lg focus:outline-none dark:bg-slate-800 dark:text-slate-100 max-w-[160px]">
+                  <input type="text" id="board-edit-desc-input" class="text-xs px-2 py-1 border border-slate-200 rounded-lg focus:outline-none dark:bg-slate-800 dark:text-slate-100 max-w-[200px]" placeholder="Description...">
+                  <button id="board-inline-save-btn" class="px-2 py-1 rounded bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold cursor-pointer">Save</button>
+                  <button id="board-inline-cancel-btn" class="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-100">Cancel</button>
+                </div>
+              </div>
+              <p id="board-header-desc" class="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5 max-w-xl md:block hidden">Welcome board to say hello!</p>
+            </div>
+            
+            <div class="flex items-center gap-2 shrink-0">
+              <button id="board-theme-btn" class="px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800/80 text-xs font-medium text-slate-600 dark:text-slate-300 flex items-center gap-1.5 cursor-pointer">
+                <svg class="w-3.5 h-3.5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/></svg>
+                <span>Theme Config</span>
+              </button>
+              <button id="global-settings-btn" class="p-2 border border-slate-200 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800/80 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 cursor-pointer" title="Workspace Settings">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+              </button>
+            </div>
+          </header>
+
+          <!-- Search Filter Panel (Slim bar beneath header) -->
+          <div class="px-6 py-2 border-b border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/40 shrink-0 flex items-center justify-between">
+            <div class="relative w-full max-w-md">
+              <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+              </span>
+              <input type="text" id="workspace-search-input" placeholder="Search content, tags, or profiles..." class="w-full pl-9 pr-4 py-1.5 rounded-lg border border-slate-200 bg-white text-xs text-slate-800 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 focus:outline-none focus:border-indigo-500 transition-colors">
+              <button id="clear-search-btn" class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600 hidden">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+              </button>
+            </div>
+            
+            <div id="search-indicators" class="text-[11px] text-slate-400 dark:text-slate-500 italic hidden md:block">
+              <!-- Active query results hint -->
+            </div>
+          </div>
+
+          <!-- Dynamic Active Stream Scroll Anchor -->
+          <div class="flex-1 overflow-y-auto" id="messages-scroller">
+            <div class="max-w-4xl mx-auto px-6 py-8" id="board-messages-container">
+              <!-- Cards Injected via JS -->
+            </div>
+          </div>
+
+          <!-- Message Composer Area -->
+          <div class="border-t border-slate-200 bg-white dark:bg-slate-900 dark:border-slate-800 shrink-0 p-4">
+            <div class="max-w-4xl mx-auto">
+              <form id="message-compose-form" class="space-y-3">
+                <div class="flex gap-3">
+                  <!-- Active avatar expression indicator -->
+                  <div id="composer-avatar-preview" class="w-10 h-10 rounded-full flex items-center justify-center text-xl bg-slate-50 border border-slate-200 dark:bg-slate-800 dark:border-slate-700 shrink-0 mt-1">
+                    👤
+                  </div>
+                  
+                  <div class="flex-1 space-y-2">
+                    <textarea id="composer-text-area" rows="3" placeholder="Compose a local post... Supports basic layout markdown!" class="w-full text-sm px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500 dark:bg-slate-850 dark:border-slate-800 dark:text-slate-100 resize-none" required></textarea>
+                    
+                    <!-- Media link tray -->
+                    <div id="composer-media-input-wrapper" class="hidden flex items-center gap-2">
+                      <div class="relative flex-1">
+                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
+                          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+                        </span>
+                        <input type="url" id="composer-media-url-input" placeholder="Attach reference link or responsive image URL..." class="w-full pl-8.5 pr-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-850 dark:bg-slate-950 text-xs text-slate-800 dark:text-slate-100 focus:outline-none">
+                      </div>
+                      <button type="button" id="composer-media-cancel-btn" class="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-md">
+                        <svg class="w-4 h-4" d="M6 18L18 6M6 6l12 12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="flex items-center justify-between pl-13">
+                  <div class="flex items-center gap-1.5">
+                    <button type="button" id="composer-photo-attach-btn" class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-850 rounded-lg cursor-pointer flex items-center gap-1 text-xs font-medium">
+                      <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                      <span>Media URL</span>
+                    </button>
+                  </div>
+                  <button type="submit" class="px-5 py-2 bg-indigo-650 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold shadow-sm flex items-center gap-2 cursor-pointer transition-colors">
+                    <span>Send Post</span>
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </main>
+      </div>
+
+      <!-- ================= MODALS SYSTEM SHELLS ================= -->
+      
+      <!-- New Board Creator Modal -->
+      <div id="new-board-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 hidden">
+        <div class="fixed inset-0 bg-slate-900/65 backdrop-blur-xs" id="new-board-modal-overlay"></div>
+        <div class="relative bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shrink-0 flex flex-col z-10 scale-95 transition-transform duration-200">
+          <div class="p-5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex items-center justify-between">
+            <h3 class="font-display font-semibold text-slate-800 dark:text-slate-150 text-base">Create Board</h3>
+            <button id="new-board-close-btn" class="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 rounded-lg cursor-pointer">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+          </div>
+          <form id="new-board-form" class="p-5 space-y-4">
+            <div>
+              <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Board Title</label>
+              <input type="text" id="new-board-name" class="w-full text-xs px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 dark:bg-slate-950 dark:border-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-500" placeholder="e.g. Creative Corner" required maxlength="30">
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Short Topic Description</label>
+              <textarea id="new-board-desc" rows="2" class="w-full text-xs px-3.5 py-2 rounded-xl border border-slate-200 bg-slate-50 dark:bg-slate-950 dark:border-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-500 resize-none" placeholder="Explain what people should chat about..." maxlength="120"></textarea>
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2">Primary Preset Theme</label>
+              <div id="new-board-presets" class="grid grid-cols-2 gap-2 max-h-32 overflow-y-auto pr-1">
+                <!-- Injected via JS -->
+              </div>
+            </div>
+            <div class="flex gap-3 pt-2">
+              <button type="button" id="new-board-cancel-btn" class="flex-1 py-2 text-xs border border-slate-200 rounded-xl dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 cursor-pointer">Cancel</button>
+              <button type="submit" class="flex-1 py-2 bg-indigo-650 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold cursor-pointer">Build Board</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Board Theme Palette Modal -->
+      <div id="board-theme-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 hidden">
+        <div class="fixed inset-0 bg-slate-900/65 backdrop-blur-xs" id="board-theme-modal-overlay"></div>
+        <div class="relative bg-white dark:bg-slate-900 rounded-2xl w-full max-w-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shrink-0 flex flex-col md:flex-row max-h-[85vh] z-10 scale-95 transition-transform duration-200">
+          <!-- Left side: Color inputs -->
+          <div class="flex-1 p-5 overflow-y-auto border-b md:border-b-0 md:border-r border-slate-100 dark:border-slate-800">
+            <h3 class="font-display font-semibold text-slate-800 dark:text-slate-150 text-base mb-2">Palette Config</h3>
+            <p class="text-[11px] text-slate-400 mb-4">Set color rules for this local board. Applies dynamically during transitions.</p>
+            
+            <!-- Quick Presets -->
+            <div class="mb-4">
+              <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Apply Theme Template</h4>
+              <div class="grid grid-cols-2 gap-1.5" id="theme-modal-presets">
+                <!-- Preset buttons injected dynamically -->
+              </div>
+            </div>
+
+            <!-- Hex Color inputs -->
+            <form id="theme-modal-form" class="space-y-3">
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="block text-[10px] font-medium text-slate-400 mb-1 uppercase">Primary Accent</label>
+                  <div class="flex gap-1.5">
+                    <input type="color" id="theme-col-primary" class="w-7 h-7 rounded border-0 cursor-pointer">
+                    <input type="text" id="theme-text-primary" class="w-full text-[11px] px-2 border rounded focus:outline-none dark:bg-slate-800 dark:text-slate-100 font-mono text-center">
+                  </div>
+                </div>
+                <div>
+                  <label class="block text-[10px] font-medium text-slate-400 mb-1 uppercase">Secondary</label>
+                  <div class="flex gap-1.5">
+                    <input type="color" id="theme-col-secondary" class="w-7 h-7 rounded border-0 cursor-pointer">
+                    <input type="text" id="theme-text-secondary" class="w-full text-[11px] px-2 border rounded focus:outline-none dark:bg-slate-800 dark:text-slate-100 font-mono text-center">
+                  </div>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="block text-[10px] font-medium text-slate-400 mb-1 uppercase">Background</label>
+                  <div class="flex gap-1.5">
+                    <input type="color" id="theme-col-bg" class="w-7 h-7 rounded border-0 cursor-pointer">
+                    <input type="text" id="theme-text-bg" class="w-full text-[11px] px-2 border rounded focus:outline-none dark:bg-slate-800 dark:text-slate-100 font-mono text-center">
+                  </div>
+                </div>
+                <div>
+                  <label class="block text-[10px] font-medium text-slate-400 mb-1 uppercase">Card Fill</label>
+                  <div class="flex gap-1.5">
+                    <input type="color" id="theme-col-card" class="w-7 h-7 rounded border-0 cursor-pointer">
+                    <input type="text" id="theme-text-card" class="w-full text-[11px] px-2 border rounded focus:outline-none dark:bg-slate-800 dark:text-slate-100 font-mono text-center">
+                  </div>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="block text-[10px] font-medium text-slate-400 mb-1 uppercase">Text Title</label>
+                  <div class="flex gap-1.5">
+                    <input type="color" id="theme-col-text" class="w-7 h-7 rounded border-0 cursor-pointer">
+                    <input type="text" id="theme-text-text" class="w-full text-[11px] px-2 border rounded focus:outline-none dark:bg-slate-800 dark:text-slate-100 font-mono text-center">
+                  </div>
+                </div>
+                <div>
+                  <label class="block text-[10px] font-medium text-slate-400 mb-1 uppercase">Border Stroke</label>
+                  <div class="flex gap-1.5">
+                    <input type="color" id="theme-col-border" class="w-7 h-7 rounded border-0 cursor-pointer">
+                    <input type="text" id="theme-text-border" class="w-full text-[11px] px-2 border rounded focus:outline-none dark:bg-slate-800 dark:text-slate-100 font-mono text-center">
+                  </div>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-2 py-1.5">
+                <input type="checkbox" id="theme-is-dark" class="rounded w-4 h-4 cursor-pointer text-indigo-600">
+                <label for="theme-is-dark" class="text-xs text-slate-600 dark:text-slate-400 cursor-pointer font-medium selection:bg-transparent">Register design as dark-mode optimized</label>
+              </div>
+
+              <div class="flex gap-2 pt-2">
+                <button type="button" id="theme-cancel-btn" class="flex-1 py-1.5 text-xs border border-slate-200 dark:border-slate-800 rounded-lg text-slate-500 hover:bg-slate-50 cursor-pointer">Cancel</button>
+                <button type="submit" class="flex-1 py-1.5 bg-indigo-650 hover:bg-indigo-700 text-white font-semibold rounded-lg text-xs cursor-pointer">Save Changes</button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Right side: Theme Preview Frame -->
+          <div class="w-full md:w-64 bg-slate-50 dark:bg-slate-950 p-5 flex flex-col justify-between overflow-y-auto shrink-0 border-t md:border-t-0 md:border-l border-slate-100 dark:border-slate-800">
+            <div>
+              <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Instant Preview (Live)</h4>
+              <div id="theme-live-preview-card" class="rounded-xl border p-4 shadow-sm space-y-3">
+                <div class="flex items-center gap-2">
+                  <div class="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center text-xs">👤</div>
+                  <div class="flex-1 min-w-0">
+                    <div class="h-2.5 w-16 bg-slate-350 rounded mb-1"></div>
+                    <div class="h-1.5 w-12 bg-slate-250 rounded"></div>
+                  </div>
+                </div>
+                <div class="space-y-1.5">
+                  <div class="h-2 w-full bg-slate-350 rounded"></div>
+                  <div class="h-2 w-3/4 bg-slate-350 rounded"></div>
+                </div>
+                <div id="theme-preview-reaction-box" class="flex gap-1.5">
+                  <span class="inline-flex items-center px-1.5 py-0.5 rounded border text-[9px] font-semibold">❤️ 2</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="pt-5 flex items-center justify-between text-[11px] text-slate-400">
+              <span id="theme-preview-name-label">Classic Light</span>
+              <button id="theme-reset-all-btn" class="text-rose-500 hover:underline cursor-pointer">Reset</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Settings Panel Modal -->
+      <div id="settings-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 hidden">
+        <div class="fixed inset-0 bg-slate-900/65 backdrop-blur-xs" id="settings-modal-overlay"></div>
+        <div class="relative bg-white dark:bg-slate-900 rounded-2xl w-full max-w-lg shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shrink-0 flex flex-col max-h-[85vh] z-10 scale-95 transition-transform duration-200">
+          <div class="p-5 border-b border-slate-200 dark:border-slate-850 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/50">
+            <h3 class="font-display font-semibold text-slate-800 dark:text-slate-150 text-base">Settings & Workspace Control</h3>
+            <button id="settings-close-btn" class="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-650 rounded-lg cursor-pointer">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+          </div>
+          <div class="p-5 overflow-y-auto space-y-6 flex-1">
+            <!-- Styling configs -->
+            <div>
+              <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Preferences</h4>
+              <div class="space-y-4">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <span class="text-xs font-medium text-slate-700 dark:text-slate-300">Global Dark Mode</span>
+                    <p class="text-[10px] text-slate-400 mt-0.5">Force light or dark mode regardless of board override.</p>
+                  </div>
+                  <input type="checkbox" id="settings-dark-mode" class="rounded w-4 h-4 cursor-pointer text-indigo-650">
+                </div>
+
+                <div class="flex items-center justify-between">
+                  <div>
+                    <span class="text-xs font-medium text-slate-700 dark:text-slate-300">Layout Density</span>
+                    <p class="text-[10px] text-slate-400 mt-0.5">Configure padding in cards.</p>
+                  </div>
+                  <select id="settings-density" class="text-xs px-2.5 py-1 rounded border dark:bg-slate-800 dark:text-slate-100 focus:outline-none">
+                    <option value="comfortable">Comfortable</option>
+                    <option value="compact">Compact</option>
+                  </select>
+                </div>
+
+                <div class="flex items-center justify-between">
+                  <div>
+                    <span class="text-xs font-medium text-slate-700 dark:text-slate-300">Sort Feed Order</span>
+                    <p class="text-[10px] text-slate-400 mt-0.5">Determine messages chronology.</p>
+                  </div>
+                  <select id="settings-ordering" class="text-xs px-2.5 py-1 rounded border dark:bg-slate-800 dark:text-slate-100 focus:outline-none">
+                    <option value="oldest">Chronological (Oldest First)</option>
+                    <option value="newest">Recent First (Newest First)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Interactivity permissions -->
+            <div>
+              <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Global Rules</h4>
+              <div class="space-y-4">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <span class="text-xs font-medium text-slate-700 dark:text-slate-300">Enable Comments & Replies</span>
+                    <p class="text-[10px] text-slate-400 mt-0.5">Toggle comments nested under messages.</p>
+                  </div>
+                  <input type="checkbox" id="settings-allow-replies" class="rounded w-4 h-4 cursor-pointer text-indigo-650">
+                </div>
+
+                <div class="flex items-center justify-between">
+                  <div>
+                    <span class="text-xs font-medium text-slate-700 dark:text-slate-300">Enable Reactions</span>
+                    <p class="text-[10px] text-slate-400 mt-0.5">Toggle dynamic emoji buttons on cards.</p>
+                  </div>
+                  <input type="checkbox" id="settings-allow-reactions" class="rounded w-4 h-4 cursor-pointer text-indigo-650">
+                </div>
+              </div>
+            </div>
+
+            <!-- Import Backup / Export file actions -->
+            <div class="pt-2 border-t border-slate-100 dark:border-slate-800">
+              <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3.5">Backup Workspace Data</h4>
+              <div class="grid grid-cols-2 gap-3">
+                <button type="button" id="export-workspace-btn" class="flex items-center justify-center gap-1.5 px-3 py-2 border border-slate-200 dark:border-slate-800 dark:hover:bg-slate-850 hover:bg-slate-50 rounded-xl text-xs font-medium text-slate-700 dark:text-slate-300 cursor-pointer">
+                  <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                  <span>Export JSON</span>
+                </button>
+                
+                <button type="button" id="import-workspace-trigger" class="flex items-center justify-center gap-1.5 px-3 py-2 border border-slate-200 dark:border-slate-800 dark:hover:bg-slate-850 hover:bg-slate-50 rounded-xl text-xs font-medium text-slate-700 dark:text-slate-300 cursor-pointer">
+                  <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                  <span>Import JSON</span>
+                </button>
+                <input type="file" id="workspace-file-input" class="hidden" accept=".json">
+              </div>
+              <div id="import-feedback" class="mt-2 text-xs font-medium text-center hidden"></div>
+            </div>
+
+            <!-- Factory reset actions -->
+            <div class="pt-2 border-t border-slate-100 dark:border-slate-800/80">
+              <div class="bg-rose-50 dark:bg-rose-950/10 rounded-xl p-4 border border-rose-100 dark:border-rose-900/30 flex flex-col gap-3">
+                <div class="flex items-start gap-3">
+                  <svg class="w-5 h-5 text-rose-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                  <div>
+                    <span class="text-xs font-bold text-rose-800 dark:text-rose-450 uppercase tracking-wide">Factory Default Reset</span>
+                    <p class="text-[10px] text-rose-600 dark:text-rose-450/85 mt-0.5">Restores all original boards, profiles, and messages. This action is permanent.</p>
+                  </div>
+                </div>
+                <div class="flex justify-end gap-2" id="reset-confirm-box">
+                  <button type="button" id="trigger-factory-reset-btn" class="px-3.5 py-1.5 text-xs bg-rose-600 hover:bg-rose-700 text-white font-semibold rounded-lg cursor-pointer">Perform Reset</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Main JS Application script target -->
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
